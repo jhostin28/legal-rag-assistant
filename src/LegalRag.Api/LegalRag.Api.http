@@ -1,0 +1,6 @@
+@LegalRag.Api_HostAddress = http://localhost:5136
+
+GET {{LegalRag.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
