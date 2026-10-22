@@ -19,25 +19,32 @@ laws (1) → (N) documents (1) → (N) chunks
 
 ```
 laws
-  id              PRIMARY KEY
-  name            NOT NULL UNIQUE
+  id              SERIAL     PRIMARY KEY
+  name            TEXT       NOT NULL UNIQUE
 
 documents
-  id              PRIMARY KEY
-  law_id          NOT NULL, FK → laws, ON DELETE RESTRICT
-  source_url      NOT NULL
-  effective_date  NOT NULL
+  id              SERIAL     PRIMARY KEY
+  law_id          INTEGER    NOT NULL, FK → laws, ON DELETE RESTRICT
+  source_url      TEXT       NOT NULL
+  effective_date  DATE       NOT NULL
   UNIQUE (law_id, effective_date)
 
 chunks
-  id              PRIMARY KEY
-  document_id     NOT NULL, FK → documents, ON DELETE CASCADE
-  article_number  NOT NULL
-  chunk_index     NOT NULL DEFAULT 1
-  content         NOT NULL
-  embedding       NOT NULL
+  id              SERIAL     PRIMARY KEY
+  document_id     INTEGER    NOT NULL, FK → documents, ON DELETE CASCADE
+  article_number  (pending)  NOT NULL
+  chunk_index     INTEGER    NOT NULL DEFAULT 1
+  content         TEXT       NOT NULL
+  embedding       vector(N)  NOT NULL
   UNIQUE (document_id, article_number, chunk_index)
 ```
+
+**Pending types:**
+- `article_number`: the Code has articles like "177 bis" and a section of
+  "Principios Fundamentales" numbered in Roman numerals, which do not fit an
+  INTEGER. Decided in Phase 2, after looking at the real text.
+- `embedding`: the dimension `N` depends on the embedding model, decided in
+  Phase 3.
 
 ## Decisions
 
