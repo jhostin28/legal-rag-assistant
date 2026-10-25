@@ -1,6 +1,10 @@
-@LegalRag.Api_HostAddress = http://localhost:5136
+@baseUrl = http://localhost:5136
 
-GET {{LegalRag.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### List all documents
+GET {{baseUrl}}/documents
 
-###
+### Get one document that exists
+GET {{baseUrl}}/documents/1
+
+### Get one document that does not exist
+GET {{baseUrl}}/documents/99

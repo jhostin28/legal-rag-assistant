@@ -20,4 +20,16 @@ public class DocumentsController : ControllerBase
     {
         return Ok(Documents);
     }
+
+    // GET /documents/5
+    [HttpGet("{id}")]
+    public IActionResult GetById(int id)
+    {
+        var document = Documents.Find(d => d.Id == id);
+
+        if (document == null)
+            return NotFound();   // 404: that document does not exist
+
+        return Ok(document);     // 200: here it is
+    }
 }
