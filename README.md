@@ -17,7 +17,7 @@ not assumed.
 | Phase | Scope | Status | Docs |
 |---|---|---|---|
 | 0 | Data design | Done | [phase-0.md](docs/phase-0.md) |
-| 1 | API: upload and list documents | Pending | |
+| 1 | API: upload and list documents | In progress | [phase-1.md](docs/phase-1.md) |
 | 2 | Chunking | Pending | |
 | 3 | Embeddings and pgvector search | Pending | |
 | 4 | Evaluation set (30 questions) | Pending | |
