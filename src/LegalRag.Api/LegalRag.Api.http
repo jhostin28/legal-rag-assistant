@@ -8,3 +8,22 @@ GET {{baseUrl}}/documents/1
 
 ### Get one document that does not exist
 GET {{baseUrl}}/documents/99
+
+### Create a document (expect 201)
+POST {{baseUrl}}/documents
+Content-Type: application/json
+
+{
+  "lawId": 1,
+  "sourceUrl": "https://example.com/reglamento-2027.pdf",
+  "effectiveDate": "2027-01-01"
+}
+
+### Create a document with a missing field (expect 400)
+POST {{baseUrl}}/documents
+Content-Type: application/json
+
+{
+  "lawId": 1,
+  "effectiveDate": "2027-01-01"
+}

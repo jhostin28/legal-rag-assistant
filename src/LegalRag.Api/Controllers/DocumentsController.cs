@@ -32,4 +32,27 @@ public class DocumentsController : ControllerBase
 
         return Ok(document);     // 200: here it is
     }
+
+    // POST /documents
+    // A missing required field never reaches this method:
+    // [ApiController] rejects it with 400 first.
+    [HttpPost]
+    public IActionResult Create(CreateDocumentRequest request)
+    {
+        // The id is assigned here, never by the client, so it cannot repeat.
+        var nextId = Documents.Max(d => d.Id) + 1;
+
+        var document = new Document
+        {
+            Id = nextId,
+            LawId = request.LawId,
+            SourceUrl = request.SourceUrl,
+            EffectiveDate = request.EffectiveDate,
+        };
+
+        Documents.Add(document);
+
+        // 201 Created, with a Location header pointing to GET /documents/{id}.
+        return CreatedAtAction(nameof(GetById), new { id = document.Id }, document);
+    }
 }
