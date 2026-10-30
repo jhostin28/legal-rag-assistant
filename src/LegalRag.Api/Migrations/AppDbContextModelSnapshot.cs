@@ -26,23 +26,28 @@ namespace LegalRag.Api.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateOnly>("EffectiveDate")
-                        .HasColumnType("date");
+                        .HasColumnType("date")
+                        .HasColumnName("effective_date");
 
                     b.Property<int>("LawId")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("law_id");
 
                     b.Property<string>("SourceUrl")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("source_url");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_documents");
 
-                    b.ToTable("Documents");
+                    b.ToTable("documents", (string)null);
                 });
 #pragma warning restore 612, 618
         }
