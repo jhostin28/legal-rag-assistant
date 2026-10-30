@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;   // controller tools: ControllerBase, Ok(), [HttpGet]
+using LegalRag.Api.Data;          // brings in AppDbContext (Data/AppDbContext.cs)
 using LegalRag.Api.Models;        // brings in Document (Models/Document.cs)
 
 namespace LegalRag.Api.Controllers;
@@ -7,25 +8,27 @@ namespace LegalRag.Api.Controllers;
 [Route("[controller]")]            // → /documents
 public class DocumentsController : ControllerBase
 {
-    // Temporary data, until PostgreSQL is connected later in this phase.
-    private static readonly List<Document> Documents =
-    [
-        new Document { Id = 1, LawId = 1, SourceUrl = "https://example.com/codigo-2020.pdf", EffectiveDate = new DateOnly(2020, 1, 1) },
-        new Document { Id = 2, LawId = 1, SourceUrl = "https://example.com/codigo-2026.pdf", EffectiveDate = new DateOnly(2026, 3, 1) },
-    ];
+    private readonly AppDbContext _db;
+
+    // The database session is handed in when the controller is created
+    // (dependency injection, registered in Program.cs).
+    public DocumentsController(AppDbContext db)
+    {
+        _db = db;
+    }
 
     // GET /documents
     [HttpGet]
     public IActionResult GetAll()
     {
-        return Ok(Documents);
+        return Ok(_db.Documents.ToList());
     }
 
     // GET /documents/5
     [HttpGet("{id}")]
     public IActionResult GetById(int id)
     {
-        var document = Documents.Find(d => d.Id == id);
+        var document = _db.Documents.Find(id);   // looks it up by primary key
 
         if (document == null)
             return NotFound();   // 404: that document does not exist
@@ -39,18 +42,16 @@ public class DocumentsController : ControllerBase
     [HttpPost]
     public IActionResult Create(CreateDocumentRequest request)
     {
-        // The id is assigned here, never by the client, so it cannot repeat.
-        var nextId = Documents.Max(d => d.Id) + 1;
-
+        // No id here: PostgreSQL assigns it when the row is saved.
         var document = new Document
         {
-            Id = nextId,
             LawId = request.LawId,
             SourceUrl = request.SourceUrl,
             EffectiveDate = request.EffectiveDate,
         };
 
-        Documents.Add(document);
+        _db.Documents.Add(document);
+        _db.SaveChanges();   // runs the INSERT; afterwards document.Id holds the new id
 
         // 201 Created, with a Location header pointing to GET /documents/{id}.
         return CreatedAtAction(nameof(GetById), new { id = document.Id }, document);
