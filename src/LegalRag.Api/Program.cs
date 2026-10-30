@@ -1,8 +1,15 @@
+using LegalRag.Api.Data;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
+
+// Register the archivist so any controller can ask for it.
+builder.Services.AddDbContext<AppDbContext>(options =>
+options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
