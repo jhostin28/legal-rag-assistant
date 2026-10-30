@@ -24,3 +24,4 @@ not assumed.
 | 5 | Generation with mandatory citations | Pending | |
 | 6 | Measure, tune, measure again | Pending | |
 | 7 | Cost and latency per query | Pending | |
+| 8 | Publish on IIS (Windows Server) | Pending | |
