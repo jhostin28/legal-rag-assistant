@@ -13,8 +13,15 @@
   A missing required field is rejected with 400 by `[ApiController]` before the
   method runs.
 - `LegalRag.Api.http`: manual requests for every endpoint, kept in the repo.
-
 - `docker-compose.yml`: local PostgreSQL 17 with pgvector, on host port 5433.
+- EF Core with the Npgsql provider. `AppDbContext` exposes the `documents`
+  table; the connection string lives in `appsettings.Development.json`
+  (development-only credentials).
+- Snake_case naming (`EFCore.NamingConventions`), so tables and columns match
+  the Phase 0 design and need no quoting in SQL.
+- Initial migration applied: `documents` with `id`, `law_id`, `source_url` and
+  `effective_date`, all NOT NULL. The `laws` table, the foreign key and
+  `UNIQUE (law_id, effective_date)` come next.
 
 **Known limitation:** documents live in memory, so anything created with POST
 is lost when the server restarts. PostgreSQL replaces the list next.
@@ -101,6 +108,22 @@ Real problems hit while building this phase.
 - **Lesson:** change one variable at a time and let each test rule something
   out. Switching networks was the test that moved the search from the network
   to the PC.
+
+### 7. Migration failed after switching to snake_case: `column "migration_id" does not exist`
+- **Symptom:** after enabling `UseSnakeCaseNamingConvention()` and adding a
+  second migration, `dotnet ef database update` failed with
+  `42703: column "migration_id" does not exist`. PostgreSQL hinted:
+  *Perhaps you meant `__EFMigrationsHistory.MigrationId`*.
+- **Cause:** EF Core keeps its own history table, `__EFMigrationsHistory`. It
+  was created by the first migration with PascalCase columns (`MigrationId`).
+  With the new convention, EF Core looked for `migration_id` and could not read
+  its own history.
+- **Fix:** the database only held test data, so it was rebuilt: dropped it
+  (`dotnet ef database drop --force`), deleted the `Migrations` folder, and
+  created one clean `InitialCreate` migration with snake_case from the start.
+- **Lesson:** decide the naming convention before the first migration. In
+  production a database is never dropped; the change would need a migration
+  that renames tables, columns and the history table carefully.
 
 ## Troubleshooting practice
 
