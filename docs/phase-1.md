@@ -14,6 +14,8 @@
   method runs.
 - `LegalRag.Api.http`: manual requests for every endpoint, kept in the repo.
 
+- `docker-compose.yml`: local PostgreSQL 17 with pgvector, on host port 5433.
+
 **Known limitation:** documents live in memory, so anything created with POST
 is lost when the server restarts. PostgreSQL replaces the list next.
 
@@ -62,6 +64,43 @@ Real problems hit while building this phase.
   November 2028) before creating the project.
 - **Lesson:** check a framework's support lifecycle before starting a project;
   migrating later costs more than choosing right at the start.
+
+### 5. `docker compose up` failed: "failed to connect to the docker API"
+- **Symptom:** `unable to get image ... failed to connect to the docker API at
+  npipe:////./pipe/dockerDesktopLinuxEngine ... check if the daemon is running`.
+- **Cause:** Docker Desktop was closed. The `docker` command is only a client;
+  the daemon (the engine that runs containers) starts with Docker Desktop.
+- **Fix:** opened Docker Desktop, waited for "Engine running", ran it again.
+- **Lesson:** the error said exactly what to check ("is the daemon running").
+  A client/server tool fails like this whenever the server side is down.
+
+### 6. Image download failed: connections reset by the network card's software
+- **Symptom:** `docker pull` failed with `failed to fetch oauth token ... EOF`,
+  and later with `TLS handshake timeout`, after some layers had downloaded.
+- **Diagnosis, layer by layer:**
+
+  | Test | Result | Rules out |
+  |---|---|---|
+  | `curl.exe -I https://auth.docker.io/token` | Connection reset | Docker itself |
+  | `curl.exe -I https://www.google.com` | Connection reset | Only Docker Hub |
+  | `nslookup auth.docker.io` | Real Cloudflare IPs | DNS / sinkhole |
+  | `curl.exe -4 -I https://www.google.com` | Connection reset | IPv6 |
+  | `curl.exe -I https://github.com` | 200 OK | A full outage: something filters |
+  | `netsh winhttp show proxy` | Direct access | A system proxy |
+  | Antivirus list (SecurityCenter2) | Only Windows Defender | Third-party antivirus |
+  | `Get-NetAdapter` | No VPN adapter | A VPN |
+  | Same test on a phone hotspot | Still failing | Router and ISP: it is the PC |
+  | `Get-Service *killer*` | Two Killer services running | (suspect found) |
+
+- **Cause:** the Killer network software (Killer Network Service and Killer
+  Analytics Service) filters traffic at the driver level and was cutting some
+  TLS connections from the terminal, on any network.
+- **Fix:** stopped both services; `curl` returned 200 at once and the image
+  downloaded. Then set them to `Disabled` so they do not start after a reboot.
+  The network driver itself is unaffected.
+- **Lesson:** change one variable at a time and let each test rule something
+  out. Switching networks was the test that moved the search from the network
+  to the PC.
 
 ## Troubleshooting practice
 
