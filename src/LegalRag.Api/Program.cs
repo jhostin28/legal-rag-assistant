@@ -9,7 +9,8 @@ builder.Services.AddControllers();
 
 // Register the archivist so any controller can ask for it.
 builder.Services.AddDbContext<AppDbContext>(options =>
-options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+.UseSnakeCaseNamingConvention());   // LawId → law_id, Documents → documents
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 

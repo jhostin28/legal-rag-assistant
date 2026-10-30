@@ -13,18 +13,18 @@ namespace LegalRag.Api.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "Documents",
+                name: "documents",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    LawId = table.Column<int>(type: "integer", nullable: false),
-                    SourceUrl = table.Column<string>(type: "text", nullable: false),
-                    EffectiveDate = table.Column<DateOnly>(type: "date", nullable: false)
+                    law_id = table.Column<int>(type: "integer", nullable: false),
+                    source_url = table.Column<string>(type: "text", nullable: false),
+                    effective_date = table.Column<DateOnly>(type: "date", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Documents", x => x.Id);
+                    table.PrimaryKey("pk_documents", x => x.id);
                 });
         }
 
@@ -32,7 +32,7 @@ namespace LegalRag.Api.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Documents");
+                name: "documents");
         }
     }
 }
