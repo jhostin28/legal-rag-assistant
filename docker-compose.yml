@@ -1,0 +1,25 @@
+# Local development database: PostgreSQL with the pgvector extension included,
+# so Phase 3 (embeddings) needs no database change.
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: legalrag
+      POSTGRES_USER: legalrag
+      # Development-only password for a local container. Never reuse it anywhere real.
+      POSTGRES_PASSWORD: legalrag_dev
+    ports:
+      # 5433 on the host, not 5432, so it does not clash with another local PostgreSQL
+      # (for example, the one from support-ticket-system).
+      - "5433:5432"
+    volumes:
+      # Keeps the data when the container is removed or recreated.
+      - legalrag_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U legalrag -d legalrag"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  legalrag_data:
