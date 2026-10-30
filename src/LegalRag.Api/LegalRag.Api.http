@@ -27,3 +27,6 @@ Content-Type: application/json
   "lawId": 1,
   "effectiveDate": "2027-01-01"
 }
+
+### Route that does not exist (expect empty 404)
+GET {{baseUrl}}/libros/1
