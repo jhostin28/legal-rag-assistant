@@ -47,7 +47,45 @@ namespace LegalRag.Api.Migrations
                     b.HasKey("Id")
                         .HasName("pk_documents");
 
+                    b.HasIndex("LawId", "EffectiveDate")
+                        .IsUnique()
+                        .HasDatabaseName("ix_documents_law_id_effective_date");
+
                     b.ToTable("documents", (string)null);
+                });
+
+            modelBuilder.Entity("LegalRag.Api.Models.Law", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_laws");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("ix_laws_name");
+
+                    b.ToTable("laws", (string)null);
+                });
+
+            modelBuilder.Entity("LegalRag.Api.Models.Document", b =>
+                {
+                    b.HasOne("LegalRag.Api.Models.Law", null)
+                        .WithMany()
+                        .HasForeignKey("LawId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_documents_laws_law_id");
                 });
 #pragma warning restore 612, 618
         }
