@@ -41,7 +41,10 @@ public class DocumentsController : ControllerBase
     // [ApiController] rejects it with 400 first.
     [HttpPost]
     public IActionResult Create(CreateDocumentRequest request)
-    {
+    {   // A bad lawId is the client's mistake (400), not a server failure (500),
+        // so check it before trying to save.
+        if (!_db.Laws.Any(l => l.Id == request.LawId))
+            return BadRequest($"Law {request.LawId} does not exist.");
         // No id here: PostgreSQL assigns it when the row is saved.
         var document = new Document
         {
