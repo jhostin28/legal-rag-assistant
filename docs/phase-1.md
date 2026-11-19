@@ -5,26 +5,30 @@
 ## What was built so far
 
 - ASP.NET Core Web API project on .NET 10, using controllers.
-- `Document` model mirroring the `documents` table (see [phase-0.md](phase-0.md)).
-- `GET /documents`, returning an in-memory list until PostgreSQL is connected.
+- `Document` and `Law` models mirroring the Phase 0 design (see [phase-0.md](phase-0.md)).
+- `GET /documents`: 200 with every document.
 - `GET /documents/{id}`: 200 with the document, 404 if it does not exist.
-- `POST /documents`: the client sends a `CreateDocumentRequest` (no id); the
-  server assigns the id and returns 201 with a `Location` header.
+- `POST /documents`: the client sends a `CreateDocumentRequest` (no id);
+  PostgreSQL assigns the id and the API returns 201 with a `Location` header.
   A missing required field is rejected with 400 by `[ApiController]` before the
   method runs.
 - `LegalRag.Api.http`: manual requests for every endpoint, kept in the repo.
 - `docker-compose.yml`: local PostgreSQL 17 with pgvector, on host port 5433.
-- EF Core with the Npgsql provider. `AppDbContext` exposes the `documents`
-  table; the connection string lives in `appsettings.Development.json`
-  (development-only credentials).
+- EF Core with the Npgsql provider, code-first. `AppDbContext` exposes the
+  `documents` and `laws` tables; the connection string lives in
+  `appsettings.Development.json` (development-only credentials).
 - Snake_case naming (`EFCore.NamingConventions`), so tables and columns match
   the Phase 0 design and need no quoting in SQL.
-- Initial migration applied: `documents` with `id`, `law_id`, `source_url` and
-  `effective_date`, all NOT NULL. The `laws` table, the foreign key and
-  `UNIQUE (law_id, effective_date)` come next.
+- Migrations applied:
+  - `InitialCreate`: the `documents` table.
+  - `AddLawsAndRules`: the `laws` table, `UNIQUE (name)`, the foreign key
+    `documents.law_id → laws.id ON DELETE RESTRICT`, and
+    `UNIQUE (law_id, effective_date)`. The rules live in
+    `AppDbContext.OnModelCreating`.
+- Data survives a server restart: the in-memory list was replaced by PostgreSQL.
 
-**Known limitation:** documents live in memory, so anything created with POST
-is lost when the server restarts. PostgreSQL replaces the list next.
+**Next:** a way to create laws (`POST /laws`). Until then, `POST /documents`
+cannot succeed, because every document needs an existing law.
 
 ## Problems found
 
@@ -80,6 +84,9 @@ Real problems hit while building this phase.
 - **Fix:** opened Docker Desktop, waited for "Engine running", ran it again.
 - **Lesson:** the error said exactly what to check ("is the daemon running").
   A client/server tool fails like this whenever the server side is down.
+  The same root cause later showed up from the API side as
+  `Failed to connect to 127.0.0.1:5433 ... actively refused it`: the database
+  container was not running.
 
 ### 6. Image download failed: connections reset by the network card's software
 - **Symptom:** `docker pull` failed with `failed to fetch oauth token ... EOF`,
@@ -124,6 +131,40 @@ Real problems hit while building this phase.
 - **Lesson:** decide the naming convention before the first migration. In
   production a database is never dropped; the change would need a migration
   that renames tables, columns and the history table carefully.
+
+### 8. Migration failed because existing rows broke the new rules
+- **Symptom:** the `AddLawsAndRules` migration failed twice: first with
+  `23505: could not create unique index "ix_documents_law_id_effective_date"`,
+  then, after removing the duplicate, with
+  `23503: ... violates foreign key constraint "fk_documents_laws_law_id"`.
+- **Cause:** `documents` already held test rows created before the rules
+  existed: two rows with the same `law_id` and `effective_date`, and rows
+  pointing to law 1, while the new `laws` table started empty.
+- **Diagnosis:** predicted before running it. A database never deletes data to
+  satisfy a new rule; it refuses to create the rule. The SQLSTATE code told
+  which rule failed: `23505` is a unique violation, `23503` a foreign key
+  violation (class `23` = integrity constraint violation).
+- **Detail:** each failed attempt also undid the `CREATE TABLE laws` that ran
+  before it. EF Core applies a migration inside a transaction: all or nothing.
+- **Fix:** test data only, so the rows were deleted (`DELETE FROM documents;`)
+  and the migration applied cleanly.
+- **Lesson:** before adding a constraint, check whether existing data violates
+  it. In production the fix is a migration that corrects the data first, never
+  deleting rows by hand.
+
+### 9. `git push` rejected: the remote history had been rewritten
+- **Symptom:** `git push` was rejected; `git pull` then showed `(forced update)`
+  and `fatal: refusing to merge unrelated histories`.
+- **Diagnosis:** `git log --oneline` locally and on `origin/main` showed the same
+  commit messages with different hashes: the remote history had been rewritten,
+  so Git found no common ancestor. Only the newest local commit was missing
+  from the remote.
+- **Fix:** kept a backup branch (`git branch respaldo`), reset `main` to the
+  remote (`git reset --hard origin/main`), re-applied the missing commit with
+  `git cherry-pick <hash>`, checked the log, then pushed.
+- **Lesson:** rewriting a shared history breaks every other copy of the repo.
+  Compare both logs before acting, and make a backup branch before any
+  `reset --hard`.
 
 ## Troubleshooting practice
 
