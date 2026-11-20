@@ -30,3 +30,12 @@ Content-Type: application/json
 
 ### Route that does not exist (expect empty 404)
 GET {{baseUrl}}/libros/1
+
+
+### Create a law (expect 201)
+POST {{baseUrl}}/laws
+Content-Type: application/json
+
+{
+  "name": "Código de Trabajo"
+}
